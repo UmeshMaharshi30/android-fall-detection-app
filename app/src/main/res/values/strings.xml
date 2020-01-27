@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Fall Detection</string>
+    <string name="sensor_list">Sensor List</string>
+</resources>
