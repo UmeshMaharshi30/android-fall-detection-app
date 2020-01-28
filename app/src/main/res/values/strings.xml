@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">Fall Detection</string>
-    <string name="sensor_list">Sensor List</string>
+    <string name="sensor_list">List of Sensors</string>
+    <string name="gyroscope">Gyroscope</string>
+    <string name="gyroscope_label">Gyro Sensor: %1$.2f %2$.2f %3$.2f</string>
+    <string name="accelerometer">Accelerometer</string>
+    <string name="accelerometer_label">Accelerometer Sensor: %1$.2f %2$.2f %3$.2f</string>
+    <string name="sensor_data_format">%1$.2f,%2$.2f,%3$.2f</string>
+    <string name="error_no_sensor">No sensor</string>
+    <string name="start_writing">Start Reading</string>
 </resources>

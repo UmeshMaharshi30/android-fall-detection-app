@@ -15,13 +15,30 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/sensor_list" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/sensor_list" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Gyro Sensor: %1$.2f"
+            android:id="@+id/gyroscope" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Accelerometer Sensor: %1$.2f"
+            android:id="@+id/accelerometer" />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/start_reading"
+            android:text="@string/start_writing"/>
+
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/sensor_list" />
         </ScrollView>
     </LinearLayout>
 
