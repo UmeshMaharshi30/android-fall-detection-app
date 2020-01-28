@@ -9,13 +9,32 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
+
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -34,6 +53,9 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     private static final String EXTRA_PARAM1 = "com.example.falldetection.extra.PARAM1";
     private static final String EXTRA_PARAM2 = "com.example.falldetection.extra.PARAM2";
 
+    private static RequestQueue queue;
+    private static final String BASE_URL = "http://desktop-smbkroj.student.iastate.edu:8080";
+    private static final String UPLOAD_SENSOR_URL = BASE_URL + "/upload/sensordata";
 
     private class SensorData {
         float x = 0, y = 0, z = 0;
@@ -120,7 +142,7 @@ public class SensorReaderService extends IntentService implements SensorEventLis
             }
             GYRO_READING = new ReadingData(Sensor.TYPE_GYROSCOPE);
             ACC_READING = new ReadingData(Sensor.TYPE_ACCELEROMETER);
-
+            queue = Volley.newRequestQueue(this);
             readingCount = 0;
 
             mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -131,6 +153,56 @@ public class SensorReaderService extends IntentService implements SensorEventLis
             if(mSensorGyro != null) mSensorManager.registerListener(this, mSensorGyro, Sensor.REPORTING_MODE_CONTINUOUS);
             if(mSensorAcc != null) mSensorManager.registerListener(this, mSensorAcc, Sensor.REPORTING_MODE_CONTINUOUS);
         }
+    }
+
+    private void uploadSensorData(final File sensorData) {
+        final Map<String, String> sensorReadings = new HashMap<String, String>();
+        sensorReadings.put("sensorData", fetchFileAsString(sensorData));
+        StringRequest sr = new StringRequest(Request.Method.POST, UPLOAD_SENSOR_URL, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                sensorData.delete();
+                Log.e("Successful", "!");
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("Unknown", "Error");
+            }
+        }){
+            @Override
+            protected Map<String,String> getParams(){
+                return sensorReadings;
+            }
+        };
+        queue.add(sr);
+    }
+
+
+    public byte[] fetchFileAsByteArr(File file) {
+        byte[] bytesArray = new byte[(int) file.length()];
+
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            fis.read(bytesArray); //read file into bytes[]
+            fis.close();
+        } catch (FileNotFoundException ex) {
+            Log.e("File" + file.getName(), "Not founc");
+        } catch (IOException ex) {
+            Log.e("File" + file.getName(), "IO Exception");
+        }
+        return bytesArray;
+    }
+
+    private String fetchFileAsString(File file) {
+        String contentBuilder = "";
+        try  {
+            contentBuilder = new String (fetchFileAsByteArr(file));
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        return contentBuilder;
     }
 
     /**
@@ -169,11 +241,13 @@ public class SensorReaderService extends IntentService implements SensorEventLis
                 else sb.append(",,,");
                 if(i < ACC_READING.list.size()) sb.append(ACC_READING.list.get(i) + ",");
                 else sb.append(",,,");
+                sb.deleteCharAt(sb.length() - 1);
                 fos.write(sb.toString().getBytes());
                 fos.write(newLine);
             }
             fos.flush();
             fos.close();
+            uploadSensorData(file);
             GYRO_READING = new ReadingData(Sensor.TYPE_GYROSCOPE);
             ACC_READING = new ReadingData(Sensor.TYPE_ACCELEROMETER);
             Log.d("Writing ", "Success");
