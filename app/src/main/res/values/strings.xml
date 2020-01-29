@@ -7,7 +7,15 @@
     <string name="accelerometer_label">Accelerometer Sensor: %1$.2f %2$.2f %3$.2f</string>
     <string name="sensor_data_format">%1$.2f,%2$.2f,%3$.2f</string>
     <string name="error_no_sensor">No sensor</string>
-    <string name="start_writing">Start Reading</string>
+    <string name="start_writing">Start Recording Data</string>
     <string name="server_add_default">http://desktop-smbkroj.student.iastate.edu:8080</string>
     <string name="readings_needed">1000</string>
+    <string name="start_reading_sensor_data">Started Reading Sensor Data !</string>
+    <string name="uploaed_success_sensor_data">Successfully Uploaded Sensor Data !</string>
+    <string name="uploaed_failed_sensor_data">Failed to Uploaded Sensor Data !</string>
+    <string name="sleep_start">Waiting to for</string>
+    <string name="sleep_delay">5</string>
+    <string name="server_add">Server Address</string>
+    <string name="reading_counts">Total readings to record</string>
+    <string name="delay_in_reading">Delay in seconds to start recording</string>
 </resources>

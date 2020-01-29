@@ -15,6 +15,7 @@ public class MainActivity extends AppCompatActivity  {
 
     private EditText serviceUrl;
     private EditText readingCount;
+    private EditText delayTime;
 
     private Button saveButton;
 
@@ -28,6 +29,7 @@ public class MainActivity extends AppCompatActivity  {
 
         serviceUrl = (EditText) findViewById(R.id.ip_address);
         readingCount = (EditText) findViewById(R.id.reading_count);
+        delayTime = (EditText) findViewById(R.id.delay_time);
 
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -35,6 +37,7 @@ public class MainActivity extends AppCompatActivity  {
                 Intent intent = new Intent(MainActivity.this, SensorReaderService.class);
                 intent.putExtra("baseUrl", serviceUrl.getText().toString());
                 intent.putExtra("readingCount", readingCount.getText().toString());
+                intent.putExtra("delay", delayTime.getText().toString());
                 startService(intent);
             }
         });

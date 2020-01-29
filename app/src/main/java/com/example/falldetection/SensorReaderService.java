@@ -8,6 +8,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -133,11 +135,15 @@ public class SensorReaderService extends IntentService implements SensorEventLis
 
             String baseUrl = intent.getStringExtra("baseUrl");
             int readsNeeded = 2000;
+            int delay = 5;
             try {
+                delay = Integer.parseInt(intent.getStringExtra("delay"));
+                createToastMessage(getString(R.string.sleep_start) + " " +  delay + " seconds !");
+                Thread.sleep(delay * 1000);
                 readsNeeded = Integer.parseInt(intent.getStringExtra("readingCount"));
                 readsNeeded = 2 * readsNeeded;
             } catch (NumberFormatException ex) {
-
+            } catch (InterruptedException ex) {
             }
             BASE_URL = baseUrl;
             UPLOAD_SENSOR_URL = BASE_URL + "/upload/sensordata";
@@ -146,7 +152,7 @@ public class SensorReaderService extends IntentService implements SensorEventLis
             ACC_READING = new ReadingData(Sensor.TYPE_ACCELEROMETER);
             queue = Volley.newRequestQueue(this);
             readingCount = 0;
-
+            createToastMessage(getString(R.string.start_reading_sensor_data));
             mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
             mSensorGyro = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
@@ -157,6 +163,15 @@ public class SensorReaderService extends IntentService implements SensorEventLis
         }
     }
 
+    private void createToastMessage(final String message) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable(){
+            public void run(){
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void uploadSensorData(final File sensorData) {
         final Map<String, String> sensorReadings = new HashMap<String, String>();
         sensorReadings.put("sensorData", fetchFileAsString(sensorData));
@@ -165,12 +180,12 @@ public class SensorReaderService extends IntentService implements SensorEventLis
             @Override
             public void onResponse(String response) {
                 sensorData.delete();
-                Log.e("Successful", "!");
+                createToastMessage(getString(R.string.uploaed_success_sensor_data));
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.e("Unknown", "Error");
+                createToastMessage(getString(R.string.uploaed_failed_sensor_data));
             }
         }){
             @Override
