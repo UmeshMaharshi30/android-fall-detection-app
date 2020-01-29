@@ -8,14 +8,16 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity  {
 
-    private TextView mTextGyro;
-    private TextView mTextAcc;
+    private EditText serviceUrl;
+    private EditText readingCount;
 
     private Button saveButton;
+
 
 
     @Override
@@ -24,13 +26,15 @@ public class MainActivity extends AppCompatActivity  {
         setContentView(R.layout.activity_main);
         saveButton = (Button) findViewById(R.id.start_reading);
 
-        TextView sensorTextView = (TextView) findViewById(R.id.sensor_list);
-        //sensorTextView.setText(sensorText);
+        serviceUrl = (EditText) findViewById(R.id.ip_address);
+        readingCount = (EditText) findViewById(R.id.reading_count);
 
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, SensorReaderService.class);
+                intent.putExtra("baseUrl", serviceUrl.getText().toString());
+                intent.putExtra("readingCount", readingCount.getText().toString());
                 startService(intent);
             }
         });

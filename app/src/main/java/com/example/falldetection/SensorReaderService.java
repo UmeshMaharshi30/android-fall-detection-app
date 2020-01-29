@@ -54,8 +54,8 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     private static final String EXTRA_PARAM2 = "com.example.falldetection.extra.PARAM2";
 
     private static RequestQueue queue;
-    private static final String BASE_URL = "http://desktop-smbkroj.student.iastate.edu:8080";
-    private static final String UPLOAD_SENSOR_URL = BASE_URL + "/upload/sensordata";
+    private static String BASE_URL = "http://desktop-smbkroj.student.iastate.edu:8080";
+    private static  String UPLOAD_SENSOR_URL = BASE_URL + "/upload/sensordata";
 
     private class SensorData {
         float x = 0, y = 0, z = 0;
@@ -130,16 +130,18 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
-            final String action = intent.getAction();
-            if (ACTION_FOO.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-                handleActionFoo(param1, param2);
-            } else if (ACTION_BAZ.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-                handleActionBaz(param1, param2);
+
+            String baseUrl = intent.getStringExtra("baseUrl");
+            int readsNeeded = 2000;
+            try {
+                readsNeeded = Integer.parseInt(intent.getStringExtra("readingCount"));
+                readsNeeded = 2 * readsNeeded;
+            } catch (NumberFormatException ex) {
+
             }
+            BASE_URL = baseUrl;
+            UPLOAD_SENSOR_URL = BASE_URL + "/upload/sensordata";
+            READING_LIMIT = readsNeeded;
             GYRO_READING = new ReadingData(Sensor.TYPE_GYROSCOPE);
             ACC_READING = new ReadingData(Sensor.TYPE_ACCELEROMETER);
             queue = Volley.newRequestQueue(this);
@@ -158,6 +160,7 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     private void uploadSensorData(final File sensorData) {
         final Map<String, String> sensorReadings = new HashMap<String, String>();
         sensorReadings.put("sensorData", fetchFileAsString(sensorData));
+        sensorReadings.put("count", (READING_LIMIT/2) + "");
         StringRequest sr = new StringRequest(Request.Method.POST, UPLOAD_SENSOR_URL, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
