@@ -1,15 +1,22 @@
 package com.example.falldetection;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.MediaPlayer;
+import android.media.RingtoneManager;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.ResultReceiver;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -38,6 +45,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
@@ -59,6 +69,11 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     private static String BASE_URL = "http://desktop-smbkroj.student.iastate.edu:8080";
     private static  String UPLOAD_SENSOR_URL = BASE_URL + "/upload/sensordata";
 
+    private static String current_activity;
+    private static int total_activity_readings;
+    private static  int START_DELAY;
+
+
     private class SensorData {
         float x = 0, y = 0, z = 0;
 
@@ -66,6 +81,10 @@ public class SensorReaderService extends IntentService implements SensorEventLis
             x = _x;
             y = _y;
             z = _z;
+        }
+
+        public double getNetAcc() {
+            return  Math.sqrt(x*x + y * y + z * z);
         }
 
         @Override
@@ -132,14 +151,18 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
-
             String baseUrl = intent.getStringExtra("baseUrl");
             int readsNeeded = 2000;
             int delay = 5;
+            total_activity_readings =  5;
+            START_DELAY = 5;
+            current_activity = intent.getStringExtra("activity");
             try {
                 delay = Integer.parseInt(intent.getStringExtra("delay"));
+                total_activity_readings = Integer.parseInt(intent.getStringExtra("readings"));
+                START_DELAY = delay;
                 createToastMessage(getString(R.string.sleep_start) + " " +  delay + " seconds !");
-                Thread.sleep(delay * 1000);
+                Thread.sleep(START_DELAY * 1000);
                 readsNeeded = Integer.parseInt(intent.getStringExtra("readingCount"));
                 readsNeeded = 2 * readsNeeded;
             } catch (NumberFormatException ex) {
@@ -172,15 +195,23 @@ public class SensorReaderService extends IntentService implements SensorEventLis
         });
     }
 
-    private void uploadSensorData(final File sensorData) {
+    private void uploadSensorData(final String sensorData) {
         final Map<String, String> sensorReadings = new HashMap<String, String>();
-        sensorReadings.put("sensorData", fetchFileAsString(sensorData));
+        sensorReadings.put("sensorData", sensorData);
         sensorReadings.put("count", (READING_LIMIT/2) + "");
+        sensorReadings.put("activity", current_activity);
+        final Bundle bundle = new Bundle();
         StringRequest sr = new StringRequest(Request.Method.POST, UPLOAD_SENSOR_URL, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                sensorData.delete();
                 createToastMessage(getString(R.string.uploaed_success_sensor_data));
+                /*total_activity_readings--;
+                createToastMessage("Remaining " + total_activity_readings + ". Sleeping for " + START_DELAY + " Seconds ..");
+                try {
+                    Thread.sleep(START_DELAY * 1000);
+                } catch (InterruptedException ex) {
+                    Log.d("Thread", "Interrupted");
+                }*/
             }
         }, new Response.ErrorListener() {
             @Override
@@ -241,6 +272,25 @@ public class SensorReaderService extends IntentService implements SensorEventLis
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
+    private void transferData() {
+        String title = "gyro_x,gyro_y,gyro_z,gyro_net,acc_x,acc_y,acc_z,acc_net";
+        int len = Math.max(GYRO_READING.list.size(), ACC_READING.list.size());
+        StringBuilder res = new StringBuilder();
+        res.append(title + System.getProperty("line.separator"));
+        for(int i = 0; i < len; i++) {
+            StringBuilder sb = new StringBuilder();
+            if(i < GYRO_READING.list.size()) sb.append(GYRO_READING.list.get(i) + ","+ GYRO_READING.list.get(i).getNetAcc() + ",");
+            else sb.append(",,,,");
+            if(i < ACC_READING.list.size()) sb.append(ACC_READING.list.get(i) + "," + ACC_READING.list.get(i).getNetAcc() + ",");
+            else sb.append(",,,,");
+            sb.deleteCharAt(sb.length() - 1);
+            sb.append(System.getProperty("line.separator"));
+            res.append(sb);
+        }
+        uploadSensorData(res.toString());
+
+    }
+
     private void saveReadingData() {
         String title = "gyro_x,gyro_y,gyro_z,acc_x,acc_y,acc_z";
         int len = Math.max(GYRO_READING.list.size(), ACC_READING.list.size());
@@ -265,10 +315,10 @@ public class SensorReaderService extends IntentService implements SensorEventLis
             }
             fos.flush();
             fos.close();
-            uploadSensorData(file);
+            //uploadSensorData(file);
+            readingCount = 0;
             GYRO_READING = new ReadingData(Sensor.TYPE_GYROSCOPE);
             ACC_READING = new ReadingData(Sensor.TYPE_ACCELEROMETER);
-            Log.d("Writing ", "Success");
         } catch (FileNotFoundException e) {
             Log.d("Folder not ", "found");
         } catch (IOException e) {
@@ -284,10 +334,15 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         int sensorType = sensorEvent.sensor.getType();
+        if(total_activity_readings < 1) mSensorManager.unregisterListener(this);
         if(readingCount == READING_LIMIT) {
-            saveReadingData();
-            Log.d("Success", "destroying");
-            mSensorManager.unregisterListener(this);
+            transferData();
+            total_activity_readings--;
+            readingCount = 0;
+            GYRO_READING = new ReadingData(Sensor.TYPE_GYROSCOPE);
+            ACC_READING = new ReadingData(Sensor.TYPE_ACCELEROMETER);
+            //mSensorManager.unregisterListener(this);
+            //onDestroy();
             return;
         }
         if(sensorEvent.values.length < 3) return;
