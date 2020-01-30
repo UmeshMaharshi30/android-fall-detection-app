@@ -40,10 +40,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import javax.xml.transform.sax.TransformerHandler;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -58,12 +61,6 @@ import androidx.core.app.NotificationManagerCompat;
 public class SensorReaderService extends IntentService implements SensorEventListener {
     // TODO: Rename actions, choose action names that describe tasks that this
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
-    private static final String ACTION_FOO = "com.example.falldetection.action.FOO";
-    private static final String ACTION_BAZ = "com.example.falldetection.action.BAZ";
-
-    // TODO: Rename parameters
-    private static final String EXTRA_PARAM1 = "com.example.falldetection.extra.PARAM1";
-    private static final String EXTRA_PARAM2 = "com.example.falldetection.extra.PARAM2";
 
     private static RequestQueue queue;
     private static String BASE_URL = "http://desktop-smbkroj.student.iastate.edu:8080";
@@ -73,46 +70,21 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     private static int total_activity_readings;
     private static  int START_DELAY;
 
-
-    private class SensorData {
-        float x = 0, y = 0, z = 0;
-
-        public SensorData(float _x, float _y, float _z) {
-            x = _x;
-            y = _y;
-            z = _z;
-        }
-
-        public double getNetAcc() {
-            return  Math.sqrt(x*x + y * y + z * z);
-        }
-
-        @Override
-        public String toString() {
-            return getString(R.string.sensor_data_format, x, y, z);
-        }
-    }
-
-    private class ReadingData {
-        String type = "";
-        List<SensorData> list = new ArrayList<SensorData>();
-
-        public ReadingData(int sensorId) {
-            if(sensorId == Sensor.TYPE_GYROSCOPE) type = "Gyroscope";
-            else type = "Accelerometer";
-        }
-
-    }
-
-    private ReadingData GYRO_READING;
-    private ReadingData ACC_READING;
-
     private SensorManager mSensorManager;
     private Sensor mSensorGyro;
     private Sensor mSensorAcc;
 
     private int readingCount;
     private int READING_LIMIT = 2000;
+
+    private double ACC_ABOVE_THRESHOLD = 25.0, ACC_BELOW_THRESHOLD = 7.0, GYRO_ABOVE_THRESHOLD = 3.5;
+
+    private int acc_normal = 0, acc_above = 0, acc_below = 0, gyro_normal = 0, gyro_above = 0;
+
+    private static long start_time = -1;
+    private static long end_time = -1;
+
+    private SensorReaderService current;
 
     public SensorReaderService() {
         super("SensorReaderService");
@@ -127,9 +99,6 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     // TODO: Customize helper method
     public static void startActionFoo(Context context, String param1, String param2) {
         Intent intent = new Intent(context, SensorReaderService.class);
-        intent.setAction(ACTION_FOO);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
         context.startService(intent);
     }
 
@@ -142,9 +111,6 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     // TODO: Customize helper method
     public static void startActionBaz(Context context, String param1, String param2) {
         Intent intent = new Intent(context, SensorReaderService.class);
-        intent.setAction(ACTION_BAZ);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
         context.startService(intent);
     }
 
@@ -171,8 +137,7 @@ public class SensorReaderService extends IntentService implements SensorEventLis
             BASE_URL = baseUrl;
             UPLOAD_SENSOR_URL = BASE_URL + "/upload/sensordata";
             READING_LIMIT = readsNeeded;
-            GYRO_READING = new ReadingData(Sensor.TYPE_GYROSCOPE);
-            ACC_READING = new ReadingData(Sensor.TYPE_ACCELEROMETER);
+
             queue = Volley.newRequestQueue(this);
             readingCount = 0;
             createToastMessage(getString(R.string.start_reading_sensor_data));
@@ -180,7 +145,7 @@ public class SensorReaderService extends IntentService implements SensorEventLis
 
             mSensorGyro = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
             mSensorAcc = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
+            current = this;
             if(mSensorGyro != null) mSensorManager.registerListener(this, mSensorGyro, Sensor.REPORTING_MODE_CONTINUOUS);
             if(mSensorAcc != null) mSensorManager.registerListener(this, mSensorAcc, Sensor.REPORTING_MODE_CONTINUOUS);
         }
@@ -205,13 +170,6 @@ public class SensorReaderService extends IntentService implements SensorEventLis
             @Override
             public void onResponse(String response) {
                 createToastMessage(getString(R.string.uploaed_success_sensor_data));
-                /*total_activity_readings--;
-                createToastMessage("Remaining " + total_activity_readings + ". Sleeping for " + START_DELAY + " Seconds ..");
-                try {
-                    Thread.sleep(START_DELAY * 1000);
-                } catch (InterruptedException ex) {
-                    Log.d("Thread", "Interrupted");
-                }*/
             }
         }, new Response.ErrorListener() {
             @Override
@@ -273,57 +231,11 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     }
 
     private void transferData() {
-        String title = "gyro_x,gyro_y,gyro_z,gyro_net,acc_x,acc_y,acc_z,acc_net";
-        int len = Math.max(GYRO_READING.list.size(), ACC_READING.list.size());
+        String title = "gyro_normal,gyro_above,acc_below,acc_normal,acc_above,duration";
         StringBuilder res = new StringBuilder();
-        res.append(title + System.getProperty("line.separator"));
-        for(int i = 0; i < len; i++) {
-            StringBuilder sb = new StringBuilder();
-            if(i < GYRO_READING.list.size()) sb.append(GYRO_READING.list.get(i) + ","+ GYRO_READING.list.get(i).getNetAcc() + ",");
-            else sb.append(",,,,");
-            if(i < ACC_READING.list.size()) sb.append(ACC_READING.list.get(i) + "," + ACC_READING.list.get(i).getNetAcc() + ",");
-            else sb.append(",,,,");
-            sb.deleteCharAt(sb.length() - 1);
-            sb.append(System.getProperty("line.separator"));
-            res.append(sb);
-        }
+        //res.append(title + System.getProperty("line.separator"));
+        res.append(gyro_normal + "," + gyro_above + "," + acc_below + "," + gyro_normal + "," + gyro_above + "," + (end_time - start_time) + ",0" + System.getProperty("line.separator"));
         uploadSensorData(res.toString());
-
-    }
-
-    private void saveReadingData() {
-        String title = "gyro_x,gyro_y,gyro_z,acc_x,acc_y,acc_z";
-        int len = Math.max(GYRO_READING.list.size(), ACC_READING.list.size());
-        String filename = "filename_" + System.currentTimeMillis() + ".csv";
-        File file = new File(getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), filename);
-        //Log.d("location", file.getAbsolutePath());
-        FileOutputStream fos;
-        byte[] newLine = System.getProperty("line.separator").getBytes();
-        try {
-            fos = new FileOutputStream(file);
-            fos.write(title.getBytes());
-            fos.write(newLine);
-            for(int i = 0; i < len; i++) {
-                StringBuilder sb = new StringBuilder();
-                if(i < GYRO_READING.list.size()) sb.append(GYRO_READING.list.get(i) + ",");
-                else sb.append(",,,");
-                if(i < ACC_READING.list.size()) sb.append(ACC_READING.list.get(i) + ",");
-                else sb.append(",,,");
-                sb.deleteCharAt(sb.length() - 1);
-                fos.write(sb.toString().getBytes());
-                fos.write(newLine);
-            }
-            fos.flush();
-            fos.close();
-            //uploadSensorData(file);
-            readingCount = 0;
-            GYRO_READING = new ReadingData(Sensor.TYPE_GYROSCOPE);
-            ACC_READING = new ReadingData(Sensor.TYPE_ACCELEROMETER);
-        } catch (FileNotFoundException e) {
-            Log.d("Folder not ", "found");
-        } catch (IOException e) {
-            Log.d("IO ", "Exception");
-        }
     }
 
     @Override
@@ -334,29 +246,60 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         int sensorType = sensorEvent.sensor.getType();
-        if(total_activity_readings < 1) mSensorManager.unregisterListener(this);
-        if(readingCount == READING_LIMIT) {
-            transferData();
-            total_activity_readings--;
-            readingCount = 0;
-            GYRO_READING = new ReadingData(Sensor.TYPE_GYROSCOPE);
-            ACC_READING = new ReadingData(Sensor.TYPE_ACCELEROMETER);
-            //mSensorManager.unregisterListener(this);
-            //onDestroy();
-            return;
+        long diff = 0;
+        if(end_time > 0) diff = System.currentTimeMillis() - end_time;
+        if(diff > 500) {
+            if(gyro_above > 2 && acc_below > 2 && acc_above > 2) {
+                mSensorManager.unregisterListener(this);
+                transferData();
+            } else {
+                start_time = -1;
+                end_time = -1;
+                gyro_above = 0;
+                gyro_normal = 0;
+                acc_below = 0;
+                acc_normal = 0;
+                acc_above = 0;
+            }
         }
         if(sensorEvent.values.length < 3) return;
-        readingCount++;
         float x = sensorEvent.values[0], y = sensorEvent.values[1], z = sensorEvent.values[2];
+        double net_acc = Math.sqrt(x * x + y * y + z * z);
         switch (sensorType) {
             case Sensor.TYPE_GYROSCOPE:
-                GYRO_READING.list.add(new SensorData(x, y, z));
+                if(net_acc >= GYRO_ABOVE_THRESHOLD) {
+                    gyro_above++;
+                    if(start_time == -1) {
+                        start_time = System.currentTimeMillis();
+                    }
+                    end_time = System.currentTimeMillis();
+                } else {
+                    if(start_time > 0) gyro_normal++;
+                }
                 break;
             case Sensor.TYPE_ACCELEROMETER:
-                ACC_READING.list.add(new SensorData(x, y, z));
+                if(net_acc < ACC_BELOW_THRESHOLD) {
+                    acc_below++;
+                    if(start_time == -1) {
+                        start_time = System.currentTimeMillis();
+                    }
+                    end_time = System.currentTimeMillis();
+                } else if(net_acc >= ACC_ABOVE_THRESHOLD) {
+                    acc_above++;
+                    if(start_time == -1) {
+                        start_time = System.currentTimeMillis();
+                    }
+                    end_time = System.currentTimeMillis();
+                } else {
+                    if(start_time > 0) acc_normal++;
+                }
                 break;
             default:
-                Log.d("Sensor " + sensorType, "");
+                break;
         }
+    }
+
+    public String getState() {
+        return gyro_normal + " " + gyro_above + " " + acc_below + " " + acc_normal + " " + acc_above;
     }
 }

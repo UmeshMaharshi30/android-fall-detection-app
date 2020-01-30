@@ -28,5 +28,6 @@
     <string name="file_upload_notification_title_template">File upload: %1$s</string>
     <string name="threshold_title">Threshold for Accerleration Vector</string>
     <string name="threshold_default_value">30</string>
+    <string name="fall_detect">Possible Fall Notification Sent</string>
 
 </resources>

@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity  {
                 startService(intent);*/
                 Intent intent = new Intent(MainActivity.this, FallMonitorService.class);
                 intent.putExtra("threshold", Double.parseDouble(thresholdReader.getText().toString()));
+                intent.putExtra("baseUrl", serviceUrl.getText().toString());
                 startService(intent);
             }
         });
