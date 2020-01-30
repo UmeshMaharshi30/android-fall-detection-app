@@ -233,9 +233,18 @@ public class SensorReaderService extends IntentService implements SensorEventLis
     private void transferData() {
         String title = "gyro_normal,gyro_above,acc_below,acc_normal,acc_above,duration";
         StringBuilder res = new StringBuilder();
-        //res.append(title + System.getProperty("line.separator"));
         res.append(gyro_normal + "," + gyro_above + "," + acc_below + "," + gyro_normal + "," + gyro_above + "," + (end_time - start_time) + ",0" + System.getProperty("line.separator"));
         uploadSensorData(res.toString());
+    }
+
+    public void reset() {
+        start_time = -1;
+        end_time = -1;
+        gyro_above = 0;
+        gyro_normal = 0;
+        acc_below = 0;
+        acc_normal = 0;
+        acc_above = 0;
     }
 
     @Override
@@ -250,16 +259,10 @@ public class SensorReaderService extends IntentService implements SensorEventLis
         if(end_time > 0) diff = System.currentTimeMillis() - end_time;
         if(diff > 500) {
             if(gyro_above > 2 && acc_below > 2 && acc_above > 2) {
-                mSensorManager.unregisterListener(this);
                 transferData();
+                reset();
             } else {
-                start_time = -1;
-                end_time = -1;
-                gyro_above = 0;
-                gyro_normal = 0;
-                acc_below = 0;
-                acc_normal = 0;
-                acc_above = 0;
+                reset();
             }
         }
         if(sensorEvent.values.length < 3) return;

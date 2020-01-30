@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity  {
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /*int sleep = Integer.parseInt(delayTime.getText().toString());;
+                int sleep = Integer.parseInt(delayTime.getText().toString());;
                 int readingsCount = Integer.parseInt(activityReadings.getText().toString());
                 Intent intent = new Intent(MainActivity.this, SensorReaderService.class);
                 intent.putExtra("baseUrl", serviceUrl.getText().toString());
@@ -49,11 +49,11 @@ public class MainActivity extends AppCompatActivity  {
                 intent.putExtra("delay", delayTime.getText().toString());
                 intent.putExtra("activity", activityName.getText().toString());
                 intent.putExtra("readings", activityReadings.getText().toString());
-                startService(intent);*/
-                Intent intent = new Intent(MainActivity.this, FallMonitorService.class);
+                startService(intent);
+                /*Intent intent = new Intent(MainActivity.this, FallMonitorService.class);
                 intent.putExtra("threshold", Double.parseDouble(thresholdReader.getText().toString()));
                 intent.putExtra("baseUrl", serviceUrl.getText().toString());
-                startService(intent);
+                startService(intent);*/
             }
         });
     }
