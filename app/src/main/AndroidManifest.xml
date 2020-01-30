@@ -6,7 +6,8 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
-
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -16,8 +17,12 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <service
+            android:name=".FallMonitoringSerivce"
+            android:enabled="true"
+            android:exported="true"></service>
+        <service
             android:name=".FallMonitorService"
-            android:exported="false"></service>
+            android:exported="false" />
         <service
             android:name=".SensorReaderService"
             android:exported="false" />

@@ -8,6 +8,7 @@
     <string name="sensor_data_format">%1$.2f,%2$.2f,%3$.2f</string>
     <string name="error_no_sensor">No sensor</string>
     <string name="start_writing">Start Recording Data</string>
+    <string name="stop_writing">Stop Recording Data</string>
     <string name="server_add_default">http://desktop-smbkroj.student.iastate.edu:8080</string>
     <string name="server_local">http://192.168.2.90:8080/</string>
     <string name="readings_needed">1000</string>
@@ -23,7 +24,8 @@
     <string name="activity_default">Random</string>
     <string name="activity_count_default">5</string>
     <string name="channel_name">fall_detection</string>
-    <string name="channel_description">fall_detection_description</string>
+    <string name="notification_title">Fall Detection Active</string>
+    <string name="notification_description">Monitoring Sensor Data</string>
     <string name="channel_id">CHANNEL_ID</string>
     <string name="file_upload_notification_title_template">File upload: %1$s</string>
     <string name="threshold_title">Threshold for Accerleration Vector</string>
