@@ -18,19 +18,9 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <service
-            android:name=".ForeEverService"
+            android:name=".FallMonitorService"
             android:enabled="true"
             android:exported="true"></service>
-        <service
-            android:name=".MonitorFall"
-            android:exported="false" />
-        <service
-            android:name=".FallMonitoringSerivce"
-            android:enabled="true"
-            android:exported="true" />
-        <service
-            android:name=".FallMonitorService"
-            android:exported="false" />
         <service
             android:name=".SensorReaderService"
             android:exported="false" />

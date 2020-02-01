@@ -2,18 +2,11 @@ package com.example.falldetection;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity  {
 
@@ -45,8 +38,8 @@ public class MainActivity extends AppCompatActivity  {
         startMonitorButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, ForeEverService.class);
-                intent.setAction(MonitorFall.ACTION_START);
+                Intent intent = new Intent(MainActivity.this, FallMonitorService.class);
+                intent.setAction(FallMonitorService.ACTION_START);
                 startForegroundService(intent);
             }
         });
@@ -54,8 +47,8 @@ public class MainActivity extends AppCompatActivity  {
         stopMonitorButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, ForeEverService.class);
-                intent.setAction(MonitorFall.ACTION_STOP);
+                Intent intent = new Intent(MainActivity.this, FallMonitorService.class);
+                intent.setAction(FallMonitorService.ACTION_STOP);
                 startForegroundService(intent);
             }
         });
