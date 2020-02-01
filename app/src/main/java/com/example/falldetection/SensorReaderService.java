@@ -111,6 +111,7 @@ public class SensorReaderService extends IntentService implements SensorEventLis
             total_activity_readings =  5;
             START_DELAY = 5;
             current_activity = intent.getStringExtra("activity");
+            Log.d("Inside", "working");
             try {
                 delay = Integer.parseInt(intent.getStringExtra("delay"));
                 total_activity_readings = Integer.parseInt(intent.getStringExtra("readings"));
@@ -150,6 +151,7 @@ public class SensorReaderService extends IntentService implements SensorEventLis
         sensorReadings.put("sensorData", sensorData);
         sensorReadings.put("count", (READING_LIMIT/2) + "");
         sensorReadings.put("activity", current_activity);
+        Log.d("data", sensorData);
         final Bundle bundle = new Bundle();
         StringRequest sr = new StringRequest(Request.Method.POST, UPLOAD_SENSOR_URL, new Response.Listener<String>() {
             @Override
@@ -159,6 +161,7 @@ public class SensorReaderService extends IntentService implements SensorEventLis
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
+                Log.e("Error", error.getMessage());
                 createToastMessage(getString(R.string.uploaed_failed_sensor_data));
             }
         }){

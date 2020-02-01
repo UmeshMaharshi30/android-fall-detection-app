@@ -38,6 +38,16 @@ public class MainActivity extends AppCompatActivity  {
         startMonitorButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                /*int sleep = Integer.parseInt(delayTime.getText().toString());
+                int readingsCount = Integer.parseInt(activityReadings.getText().toString());
+                Intent intent = new Intent(MainActivity.this, SensorReaderService.class);
+                intent.putExtra("baseUrl", serviceUrl.getText().toString());
+                intent.putExtra("readingCount", readingCount.getText().toString());
+                intent.putExtra("delay", delayTime.getText().toString());
+                intent.putExtra("activity", activityName.getText().toString());
+                intent.putExtra("readings", activityReadings.getText().toString());
+                startService(intent);*/
+
                 Intent intent = new Intent(MainActivity.this, FallMonitorService.class);
                 intent.setAction(FallMonitorService.ACTION_START);
                 startForegroundService(intent);

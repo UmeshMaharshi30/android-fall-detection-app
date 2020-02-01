@@ -37,7 +37,7 @@ public class FallMonitorService extends Service implements SensorEventListener {
 
     private static RequestQueue queue;
     private static String BASE_URL = "http://desktop-smbkroj.student.iastate.edu:8080";
-    private static String FALL_API_URL = "http://192.168.2.90:5000/predict/android";
+    private static String FALL_API_URL = "http://desktop-smbkroj.student.iastate.edu:5000/predict/android";
     private static  String FALL_TRIGGER_URL = BASE_URL + "/fall";
 
     private static String current_activity;
@@ -159,7 +159,8 @@ public class FallMonitorService extends Service implements SensorEventListener {
                         public void onResponse(JSONObject response) {
                             try {
                                 Notification notification = createNotification("Prediction " + response.getDouble("prediction") + " AVM " + avmFall);
-                                if(response.getDouble("prediction") > 0.5 || avmFall) {
+                                double prediction = response.getDouble("prediction");
+                                if(prediction >= 0.5 || (avmFall && prediction >= 0.25)) {
                                     notificationManager.notify(1, notification);
                                 }
                             } catch (JSONException ex) {
@@ -171,6 +172,8 @@ public class FallMonitorService extends Service implements SensorEventListener {
                         @Override
                         public void onErrorResponse(VolleyError error) {
                             // TODO: Handle error
+                            Notification notification = createNotification("Only AVM Fall Detected !");
+                            notificationManager.notify(1, notification);
                             if(error.getMessage() != null) Log.e("Error", error.getMessage());
 
                         }
@@ -191,11 +194,6 @@ public class FallMonitorService extends Service implements SensorEventListener {
             long delta = end_time - start_time;
             boolean avm = (gyro_above >= 20 && gyro_above < 200 && acc_below >= 65 && acc_above >= 15 && delta >= 500 && delta <= 1800);
             connectToFallAPI(getReadings(), avm);
-            if(avm) {
-                final NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-                Notification notification = createNotification("Only AVM Fall Detected !");
-                notificationManager.notify(1, notification);
-            }
             reset();
         }
         if(sensorEvent.values.length < 3) return;
