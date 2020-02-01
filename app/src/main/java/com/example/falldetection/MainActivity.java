@@ -55,32 +55,29 @@ public class MainActivity extends AppCompatActivity  {
                 intent.putExtra("activity", activityName.getText().toString());
                 intent.putExtra("readings", activityReadings.getText().toString());
                 startService(intent);*/
-                /*Intent intent = new Intent(MainActivity.this, FallMonitorService.class);
+                Intent intent = new Intent(MainActivity.this, FallMonitorService.class);
                 intent.putExtra("threshold", Double.parseDouble(thresholdReader.getText().toString()));
                 intent.putExtra("baseUrl", serviceUrl.getText().toString());
-                startService(intent);*/
-                actionOnService("start");
-            }
-        });
-
-        stopButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                actionOnService("stop");
+                startService(intent);
+                //actionOnService("start");
             }
         });
     }
 
     private void actionOnService(String action) {
         int serviceStatus = FallMonitoringSerivce.state;
-        Intent intent = new Intent(this, FallMonitoringSerivce.class);
-        Log.d("Action from parent", action);
+        Intent intent = new Intent(this, SensorReaderService.class);
         intent.setAction(action);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent);
-            return;
+        intent.putExtra("baseUrl", serviceUrl.getText().toString());
+        intent.putExtra("readingCount", readingCount.getText().toString());
+        intent.putExtra("delay", delayTime.getText().toString());
+        intent.putExtra("activity", activityName.getText().toString());
+        intent.putExtra("readings", activityReadings.getText().toString());
+        if(action.equals("start")) {
+            startService(intent);
+        } else {
+            stopService(intent);
         }
-        startService(intent);
     }
 
 }

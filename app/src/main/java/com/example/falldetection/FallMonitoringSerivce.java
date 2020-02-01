@@ -39,7 +39,6 @@ public class FallMonitoringSerivce extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent != null) {
             String action = intent.getAction();
-            Log.d("Action", action);
             if(action.equals("start")) {
                 startService(intent);
             } else if(action.equals("stop")) {
@@ -48,7 +47,7 @@ public class FallMonitoringSerivce extends Service {
                 Log.e("Error", "Something wrong !");
             }
         }
-        return START_STICKY_COMPATIBILITY;
+        return 0;
     }
 
     public Notification createNotification() {
@@ -89,33 +88,16 @@ public class FallMonitoringSerivce extends Service {
     public void onDestroy() {
         super.onDestroy();
         Toast.makeText(this, "Service destroyed", Toast.LENGTH_SHORT).show();
+        stopForeground(true);
     }
 
     public void startService() {
         if(isRunning) return;
-        Toast.makeText(this, "Service starting its task", Toast.LENGTH_SHORT).show();
-        isRunning = true;
-        setServiceState(getApplicationContext(),1);
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FallMonitoring::FallTag");
-        wakeLock.acquire();
     }
 
 
     public void stopService() {
-        Toast.makeText(this, "Service stopping", Toast.LENGTH_SHORT).show();
-        if(wakeLock.isHeld()) {
-            wakeLock.release();
-        }
-        stopForeground(true);
-        stopSelf();
-        isRunning = false;
-        setServiceState(getApplicationContext(),0);
-    }
 
-    public void setServiceState(Context context, int serviceState) {
-        Log.d("state in service", serviceState + "");
-        state = serviceState;
     }
 
 }

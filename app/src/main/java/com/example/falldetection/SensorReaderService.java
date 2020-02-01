@@ -90,28 +90,16 @@ public class SensorReaderService extends IntentService implements SensorEventLis
         super("SensorReaderService");
     }
 
-    /**
-     * Starts this service to perform action Foo with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionFoo(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, SensorReaderService.class);
-        context.startService(intent);
-    }
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
-    /**
-     * Starts this service to perform action Baz with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionBaz(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, SensorReaderService.class);
-        context.startService(intent);
+        mSensorGyro = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        mSensorAcc = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        current = this;
+        if(mSensorGyro != null) mSensorManager.registerListener(this, mSensorGyro, Sensor.REPORTING_MODE_CONTINUOUS);
+        if(mSensorAcc != null) mSensorManager.registerListener(this, mSensorAcc, Sensor.REPORTING_MODE_CONTINUOUS);
     }
 
     @Override
@@ -128,11 +116,10 @@ public class SensorReaderService extends IntentService implements SensorEventLis
                 total_activity_readings = Integer.parseInt(intent.getStringExtra("readings"));
                 START_DELAY = delay;
                 createToastMessage(getString(R.string.sleep_start) + " " +  delay + " seconds !");
-                Thread.sleep(START_DELAY * 1000);
+                //Thread.sleep(START_DELAY * 1000);
                 readsNeeded = Integer.parseInt(intent.getStringExtra("readingCount"));
                 readsNeeded = 2 * readsNeeded;
             } catch (NumberFormatException ex) {
-            } catch (InterruptedException ex) {
             }
             BASE_URL = baseUrl;
             UPLOAD_SENSOR_URL = BASE_URL + "/upload/sensordata";
@@ -141,14 +128,12 @@ public class SensorReaderService extends IntentService implements SensorEventLis
             queue = Volley.newRequestQueue(this);
             readingCount = 0;
             createToastMessage(getString(R.string.start_reading_sensor_data));
-            mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-
-            mSensorGyro = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-            mSensorAcc = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-            current = this;
-            if(mSensorGyro != null) mSensorManager.registerListener(this, mSensorGyro, Sensor.REPORTING_MODE_CONTINUOUS);
-            if(mSensorAcc != null) mSensorManager.registerListener(this, mSensorAcc, Sensor.REPORTING_MODE_CONTINUOUS);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+
     }
 
     private void createToastMessage(final String message) {
@@ -210,24 +195,6 @@ public class SensorReaderService extends IntentService implements SensorEventLis
             e.printStackTrace();
         }
         return contentBuilder;
-    }
-
-    /**
-     * Handle action Foo in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionFoo(String param1, String param2) {
-        // TODO: Handle action Foo
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    /**
-     * Handle action Baz in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionBaz(String param1, String param2) {
-        // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
     }
 
     private void transferData() {
