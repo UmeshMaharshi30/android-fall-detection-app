@@ -172,8 +172,10 @@ public class FallMonitorService extends Service implements SensorEventListener {
                         @Override
                         public void onErrorResponse(VolleyError error) {
                             // TODO: Handle error
-                            Notification notification = createNotification("Only AVM Fall Detected !");
-                            notificationManager.notify(1, notification);
+                            if(avmFall) {
+                                Notification notification = createNotification("Only AVM Fall Detected !");
+                                notificationManager.notify(1, notification);
+                            }
                             if(error.getMessage() != null) Log.e("Error", error.getMessage());
 
                         }
