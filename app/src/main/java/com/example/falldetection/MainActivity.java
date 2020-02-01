@@ -24,17 +24,13 @@ public class MainActivity extends AppCompatActivity  {
     private EditText activityReadings;
     private EditText thresholdReader;
 
-    private Button saveButton;
-    private Button stopButton;
-
+    private Button startMonitorButton;
+    private Button stopMonitorButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        saveButton = (Button) findViewById(R.id.start_reading);
-        stopButton = (Button) findViewById(R.id.stop_reading);
 
         serviceUrl = (EditText) findViewById(R.id.ip_address);
         readingCount = (EditText) findViewById(R.id.reading_count);
@@ -43,41 +39,26 @@ public class MainActivity extends AppCompatActivity  {
         activityReadings = (EditText) findViewById(R.id.activity_count);
         thresholdReader = (EditText) findViewById(R.id.threshold);
 
-        saveButton.setOnClickListener(new View.OnClickListener() {
+        startMonitorButton = (Button) findViewById(R.id.start_service);
+        stopMonitorButton = (Button) findViewById(R.id.stop_service);
+
+        startMonitorButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                /*int sleep = Integer.parseInt(delayTime.getText().toString());;
-                int readingsCount = Integer.parseInt(activityReadings.getText().toString());
-                Intent intent = new Intent(MainActivity.this, SensorReaderService.class);
-                intent.putExtra("baseUrl", serviceUrl.getText().toString());
-                intent.putExtra("readingCount", readingCount.getText().toString());
-                intent.putExtra("delay", delayTime.getText().toString());
-                intent.putExtra("activity", activityName.getText().toString());
-                intent.putExtra("readings", activityReadings.getText().toString());
-                startService(intent);*/
-                Intent intent = new Intent(MainActivity.this, FallMonitorService.class);
-                intent.putExtra("threshold", Double.parseDouble(thresholdReader.getText().toString()));
-                intent.putExtra("baseUrl", serviceUrl.getText().toString());
-                startService(intent);
-                //actionOnService("start");
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, ForeEverService.class);
+                intent.setAction(MonitorFall.ACTION_START);
+                startForegroundService(intent);
             }
         });
-    }
 
-    private void actionOnService(String action) {
-        int serviceStatus = FallMonitoringSerivce.state;
-        Intent intent = new Intent(this, SensorReaderService.class);
-        intent.setAction(action);
-        intent.putExtra("baseUrl", serviceUrl.getText().toString());
-        intent.putExtra("readingCount", readingCount.getText().toString());
-        intent.putExtra("delay", delayTime.getText().toString());
-        intent.putExtra("activity", activityName.getText().toString());
-        intent.putExtra("readings", activityReadings.getText().toString());
-        if(action.equals("start")) {
-            startService(intent);
-        } else {
-            stopService(intent);
-        }
+        stopMonitorButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, ForeEverService.class);
+                intent.setAction(MonitorFall.ACTION_STOP);
+                startForegroundService(intent);
+            }
+        });
     }
 
 }

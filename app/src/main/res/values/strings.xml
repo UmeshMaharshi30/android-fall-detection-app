@@ -31,5 +31,6 @@
     <string name="threshold_title">Threshold for Accerleration Vector</string>
     <string name="threshold_default_value">30</string>
     <string name="fall_detect">Possible Fall Notification Sent</string>
-
+    <string name="start_service">Start Fall Monitor</string>
+    <string name="stop_service">Stop Fall Monitor</string>
 </resources>
